@@ -2,9 +2,16 @@
 #include <stdio.h>
 #include <tak.h>
 
+struct my_proc;
+
+struct my_list_entry {
+	struct my_proc* le_next;
+};
+
 struct my_proc {
 	intmax_t p_pid;	
 	intmax_t p_numthreads;
+	struct my_list_entry p_list;
 };
 
 struct my_proclist {
@@ -25,6 +32,10 @@ main(void)
 		return EXIT_FAILURE;
 	}
 
+	proclist = malloc(sizeof(struct my_proclist));
+	printf("proclist = %p\n", proclist);
+	proclist->lh_first = (struct my_proc*)0x1234;
+
 	retval = tak_map_sym(&t_conn,
 	                     "struct my_proclist",
 	                     "allproc",
@@ -34,10 +45,13 @@ main(void)
 		return EXIT_FAILURE;
 	}
 
-	printf("%p\n", proclist);
-	printf("%p\n", proclist->lh_first);
-	printf("p_pid = %lld\n", proclist->lh_first->p_pid);
-	printf("p_numthreads = %lld\n", proclist->lh_first->p_numthreads);
+	printf("\n------\n");
+	printf("proclist.lh_first = %p\n", proclist->lh_first);
+	for (runner = proclist->lh_first;
+	     runner != NULL;
+	     runner = runner->p_list.le_next) {
+		printf("%lld %lld\n", runner->p_pid, runner->p_numthreads);
+	}
 
 	return EXIT_SUCCESS;
 }
