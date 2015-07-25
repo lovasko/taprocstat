@@ -33,9 +33,6 @@ main(void)
 	}
 
 	proclist = malloc(sizeof(struct my_proclist));
-	printf("proclist = %p\n", proclist);
-	proclist->lh_first = (struct my_proc*)0x1234;
-
 	retval = tak_map_sym(&t_conn,
 	                     "struct my_proclist",
 	                     "allproc",
