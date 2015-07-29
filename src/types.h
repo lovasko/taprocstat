@@ -25,8 +25,10 @@ struct ps_rusage {
 };
 
 struct ps_proc {
-	intmax_t p_pid;	
+	intmax_t p_pid;
+	intmax_t p_ppid;
 	intmax_t p_numthreads;
+	intmax_t p_comm[20];
 	struct ps_pstats* p_stats;
 	struct ps_ucred* p_ucred;
 	struct ps_rusage p_ru;
