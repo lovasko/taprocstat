@@ -11,6 +11,9 @@ $ ninja
 
 ## Dependencies
  * [libtak](https://github.com/lovasko/libtak)
+ * [libtabl](https://github.com/lovasko/libtabl)
+ * [libits](https://github.com/lovasko/libits)
+ * [m_list](https://github.com/lovasko/m_list)
 
 ## License
 2-clause BSD license. For more information please consult the
