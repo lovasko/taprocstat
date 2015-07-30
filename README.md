@@ -1,5 +1,5 @@
-#taps
-Type-aware ps(1) implementation.
+# taprocstat
+Type-aware procstat(1) implementation.
 
 ## About
 

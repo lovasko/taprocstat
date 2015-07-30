@@ -1,5 +1,5 @@
 cflags = -g -I/usr/include/ctf -Isrc -ansi -pedantic -Wall -Wextra
-ldflags = -ltak
+ldflags = -ltak -ltabl -lmlist -lits
 
 rule compile
  command = clang $cflags -c $in -o $out
@@ -9,5 +9,5 @@ rule link
 
 build obj/main.o: compile src/main.c
 
-build bin/taps: link obj/main.o
+build bin/taprocstat: link obj/main.o
 
