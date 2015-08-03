@@ -9,5 +9,19 @@ rule link
 
 build obj/main.o: compile src/main.c
 
-build bin/taprocstat: link obj/main.o
+build obj/getter/command.o: compile src/getter/command.c
+build obj/getter/numthreads.o: compile src/getter/numthreads.c
+build obj/getter/osrel.o: compile src/getter/osrel.c
+build obj/getter/pid.o: compile src/getter/pid.c
+build obj/getter/ppid.o: compile src/getter/ppid.c
+build obj/getter/ruid.o: compile src/getter/ruid.c
+build obj/getter/svuid.o: compile src/getter/svuid.c
+build obj/getter/uid.o: compile src/getter/uid.c
+build obj/getter/username.o: compile src/getter/username.c
+
+build obj/mode/binary.o: compile src/mode/binary.c
+build obj/mode/default.o: compile src/mode/default.c
+build obj/mode/security.o: compile src/mode/security.c
+
+build bin/taprocstat: link obj/main.o obj/getter/command.o obj/getter/numthreads.o obj/getter/osrel.o obj/getter/pid.o obj/getter/ppid.o obj/getter/ruid.o obj/getter/svuid.o obj/getter/uid.o obj/getter/username.o obj/mode/binary.o obj/mode/default.o obj/mode/security.o
 
