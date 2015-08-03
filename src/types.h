@@ -1,3 +1,6 @@
+#ifndef TA_PROCSTAT_TYPES_H
+#define TA_PROCSTAT_TYPES_H
+
 #include <stdint.h>
 
 struct ps_proc;
@@ -17,6 +20,8 @@ struct ps_pstats {
 
 struct ps_ucred {
 	uintmax_t cr_uid;
+	uintmax_t cr_ruid;
+	uintmax_t cr_svuid;
 };
 
 struct ps_rusage {
@@ -28,6 +33,7 @@ struct ps_proc {
 	intmax_t p_pid;
 	intmax_t p_numthreads;
 	intmax_t p_comm[20];
+	intmax_t p_osrel;
 	struct ps_pstats* p_stats;
 	struct ps_ucred* p_ucred;
 	struct ps_rusage p_ru;
@@ -38,4 +44,6 @@ struct ps_proc {
 struct ps_proclist {
 	struct ps_proc* lh_first;
 };
+
+#endif
 
