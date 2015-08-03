@@ -1,16 +1,13 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <limits.h>
 #include <inttypes.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <tak.h>
-#include <pwd.h>
-#include <tabl.h>
-#include <its.h>
-#include <ctype.h>
 
+#include "mode/mode.h"
 #include "types.h"
 
 static int
@@ -31,68 +28,71 @@ number_sort(void* a_str, void* b_str)
 	return 0;
 }
 
-static char*
-get_pid(struct ps_proc* proc)
+static void
+usage(void)
 {
-	return its(&proc->p_pid, ITS_SIZE_INTMAX, ITS_SIGNED, ITS_BASE_DEC);
+	printf("procstat [-b | -s] [-a | pid]\n");
 }
 
-static char*
-get_ppid(struct ps_proc* proc)
+static int
+get_mode(int option)
 {
-	if (proc->p_pptr != NULL)
-		return its(&proc->p_pptr->p_pid,
-			         ITS_SIZE_INTMAX,
-		           ITS_SIGNED,
-		           ITS_BASE_DEC);
-	else
-		return "-";
-}
+	if (option == 'b') return MODE_BINARY;
+	if (option == 's') return MODE_SECURITY;
 
-static char*
-get_numthreads(struct ps_proc* proc)
-{
-		return its(&proc->p_numthreads,
-		           ITS_SIZE_INTMAX,
-		           ITS_SIGNED,
-		           ITS_BASE_DEC);
-}
-
-static char*
-get_command(struct ps_proc* proc)
-{
-	char comm[20];
-	unsigned int i;
-
-	memset(comm, '\0', 20);
-	for (i = 0; i < 20; i++)
-		comm[i] = (char)(proc->p_comm[i]);
-
-	return strdup(comm);
-}
-
-static char*
-get_username(struct ps_proc* proc)
-{
-	struct passwd* pwd;
-
-	pwd = getpwuid((uid_t)proc->p_ucred->cr_uid);
-
-	if (pwd != NULL)
-		return strdup(pwd->pw_name);
-	else
-		return "-";
+	return MODE_DEFAULT;
 }
 
 int
-main(void)
+main(int argc, char* argv[])
 {
 	struct tak t_conn;
 	int retval;
 	struct ps_proclist* proclist;
 	struct ps_proc* proc;
-	struct tabl table;
-	struct m_list values;
+	struct m_list procs;
+	int mode;
+	int option;
+	intmax_t pid;
+
+	pid = -2;
+	mode = MODE_DEFAULT;
+
+	while ((option = getopt(argc, argv, "ab:s:")) != -1) {
+		switch (option)	{
+			case 'b':
+			case 's':
+				if (mode == MODE_DEFAULT)
+					mode = get_mode(option);
+				else {
+					fprintf(stderr, "ERROR: only one mode allowed.\n");
+					usage();
+					return EXIT_FAILURE;
+				}
+			break;
+
+			case 'a':
+				pid = -1;
+			break;
+
+			case '?':
+				fprintf(stderr, "ERROR: invalid option '%c'\n", optopt);	
+				usage();
+			return EXIT_FAILURE;
+
+			default: 
+				fprintf(stderr, "ERROR: unknown error during option parsing\n");	
+				usage();
+			return EXIT_FAILURE;
+		}
+	}
+
+	if (argc - optind != 1) {
+		usage();
+		return EXIT_FAILURE;
+	} else {
+		pid = (intmax_t)strtoumax(argv[optind], NULL, 10);
+	}
 
 	retval = tak_open(&t_conn, TAK_TYPE_INFO_CTF, TAK_DATA_SOURCE_KVM);
 	if (retval != TAK_OK) {
@@ -110,28 +110,22 @@ main(void)
 		return EXIT_FAILURE;
 	}
 
-	m_list_init(&values);
-	tabl_init(&table, 0);
-	tabl_add_column(&table, "PID", NULL, TABL_ALIGN_RIGHT);
-	tabl_add_column(&table, "PPID", NULL, TABL_ALIGN_RIGHT);
-	tabl_add_column(&table, "THR", NULL, TABL_ALIGN_RIGHT);
-	tabl_add_column(&table, "LOGIN", NULL, TABL_ALIGN_LEFT);
-	tabl_add_column(&table, "COMM", NULL, TABL_ALIGN_LEFT);
-
+	m_list_init(&procs);
 	for (proc = proclist->lh_first;
 	     proc != NULL;
 	     proc = proc->p_list.le_next) {
-		m_list_clear(&values);
-		m_list_append(&values, M_LIST_COPY_SHALLOW, get_pid(proc), 1);
-		m_list_append(&values, M_LIST_COPY_SHALLOW, get_ppid(proc), 1);
-		m_list_append(&values, M_LIST_COPY_SHALLOW, get_numthreads(proc), 1);
-		m_list_append(&values, M_LIST_COPY_SHALLOW, get_username(proc), 1);
-		m_list_append(&values, M_LIST_COPY_SHALLOW, get_command(proc), 1);
-		tabl_add_row(&table, &values);
+		if (pid == -1 || pid == proc->p_pid)
+			m_list_append(&procs, M_LIST_COPY_SHALLOW, proc, 1);
 	}
 
-	tabl_sort(&table, 0, number_sort);
-	tabl_render(&table, NULL); 
+	if (m_list_is_empty(&procs) == M_LIST_TRUE) {
+		fprintf(stderr, "ERROR: no matching processes found\n");
+		return EXIT_FAILURE;
+	}
+
+	if (mode == MODE_DEFAULT) mode_default(&procs);
+	if (mode == MODE_BINARY) mode_binary(&procs);
+	if (mode == MODE_SECURITY) mode_security(&procs);
 
 	return EXIT_SUCCESS;
 }
