@@ -58,7 +58,7 @@ main(int argc, char* argv[])
 	pid = -2;
 	mode = MODE_DEFAULT;
 
-	while ((option = getopt(argc, argv, "ab:s:")) != -1) {
+	while ((option = getopt(argc, argv, "abs")) != -1) {
 		switch (option)	{
 			case 'b':
 			case 's':
@@ -88,8 +88,10 @@ main(int argc, char* argv[])
 	}
 
 	if (argc - optind != 1) {
-		usage();
-		return EXIT_FAILURE;
+		if (pid != -1) {
+			usage();
+			return EXIT_FAILURE;
+		}
 	} else {
 		pid = (intmax_t)strtoumax(argv[optind], NULL, 10);
 	}
